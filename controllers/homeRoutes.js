@@ -6,7 +6,7 @@ const withAuth = require("../utils/auth");
 
 router.get("/", async (req, res) => {
     try {
-      // Get all projects and JOIN with user data
+      // Get all posts and JOIN with user data
       const postData = await Post.findAll({
         include: [
           {
@@ -16,10 +16,10 @@ router.get("/", async (req, res) => {
         ],
       });
   
-      // Serialize data so the template can read it
+      
       const posts = postData.map((post) => post.get({ plain: true }));
   
-      // Pass serialized data and session flag into template
+     
       if (req.session.logged_in) {
         res.render("homepage", {
           posts,
@@ -55,8 +55,42 @@ router.get("/", async (req, res) => {
     }
   });
 
-
-
-
+  router.get("/profile", withAuth, async (req, res) => {
+    try {
+      // Find the logged in user based on the session ID
+      const userData = await User.findByPk(req.session.user_id, {
+        attributes: { exclude: ["password"] },
+        include: [{ model: Post }],
+      });
+  
+      const user = userData.get({ plain: true });
+  
+      res.render("profile", {
+        ...user,
+        logged_in: true,
+      });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  });
+  // login route
+  router.get("/login", (req, res) => {
+    
+    if (req.session.logged_in) {
+      res.redirect("/profile");
+      return;
+    }
+  
+    res.render("login");
+  });
+  
+  // Sign up route
+router.get("/signup", (req, res) => {
+  if (req.session.loggedIn) {
+    res.redirect("/");
+    return;
+  }
+  res.render("sign-up");
+});
 
   module.exports = router;

@@ -5,7 +5,7 @@ const withAuth = require('../../utils/auth');
 router.post("/", withAuth, async (req, res) => {
     console.log("post", req.body, req.session);
     try {
-      const newPost = await Idea.create({
+      const newPost = await Post.create({
         ...req.body,
         user_id: req.session.user_id,
         
@@ -17,6 +17,43 @@ router.post("/", withAuth, async (req, res) => {
     }
   });
 
+  //GET existing post
+  router.get("/", withAuth, async (req, res) => {
+    try {
+      const postData = await Post.findAll({
+        where: {
+          user_id: req.session.user_id,
+        },
+      });
+  
+      const post = postData.map((post) => post.get({ plain: true }));
+      res.status(200).json(post);
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  });
+
+
+  //Update existing post
+router.put("/:id", withAuth, async (req, res) => {
+  console.log(req.body.updatedTitle, req.body.updatedContent);
+  BlogPosts.update(
+    {
+      title: req.body.updatedTitle,
+      content: req.body.updatedContent,
+    },
+    {
+      where: {
+        id: req.params.id,
+      },
+    }
+  )
+    .then(() => res.sendStatus(200))
+    .catch((err) => res.status(500).json(err));
+});
+
+
+// Delete existing post
   router.delete('/:id', withAuth, async (req, res) => {
     try {
       const postData = await Post.destroy({
